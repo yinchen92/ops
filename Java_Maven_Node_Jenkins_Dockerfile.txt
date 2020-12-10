@@ -1,0 +1,39 @@
+FROM centos:7
+MAINTAINER yinchen
+USER root
+
+#install java
+ADD java8.tar.gz /opt/
+ENV JAVA_HOME /opt/jdk1.8.0_201
+ENV JRE_HOME=$JAVA_HOME/jre
+ENV CLASSPATH .:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+ENV PATH $JAVA_HOME/bin:$PATH
+
+#install maven
+ADD apache-maven-3.6.3-bin.tar.gz /opt/
+ENV MAVEN_HOME /opt/apache-maven-3.6.3
+ENV PATH $MAVEN_HOME/bin:$PATH
+#copy icbc related jars to mvn reposiroty
+COPY icbc /root/.m2/repository/icbc
+#copy oracle6 related jars to mvn repository
+COPY 6.0 /root/.m2/repository/com/oracle/oracle/6.0
+
+#install node
+ADD node-v12.12.0-linux-x64.tar.xz /opt/
+RUN ln -s /opt/node-v12.12.0-linux-x64/bin/node /usr/local/bin/node
+RUN ln -s /opt/node-v12.12.0-linux-x64/bin/npm /usr/local/bin/npm
+
+#install tomcat
+RUN mkdir -p /var/jenkins_home
+ENV JENKINS_HOME /var/jenkins_home
+ADD apache-tomcat-9.0.30.tar.gz /opt/
+ADD jenkins.war /opt/apache-tomcat-9.0.30/webapps
+
+#CMD /opt/apache-tomcat-9.0.30/bin/catalina.sh run
+CMD systemctl start docker
+
+#expose port
+EXPOSE 8080
+
+VOLUME  ["/var/jenkins_home/workspace/"]
+ENTRYPOINT ["/opt/apache-tomcat-9.0.30/bin/catalina.sh","run"]
